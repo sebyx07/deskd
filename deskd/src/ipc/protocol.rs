@@ -21,6 +21,28 @@ pub enum Request {
 
     // Database queries
     GetTaskHistory { limit: Option<usize> },
+
+    // AT-SPI Element operations (Phase 2)
+    FindElement {
+        name: Option<String>,
+        role: Option<String>,
+    },
+    ClickElement {
+        name: String,
+        button: Option<String>,
+    },
+    DoubleClickElement {
+        name: String,
+    },
+    TypeIntoElement {
+        name: String,
+        text: String,
+        secure: Option<bool>,
+    },
+    FocusElement {
+        name: String,
+    },
+    GetFocusedElement,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

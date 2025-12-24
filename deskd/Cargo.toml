@@ -36,6 +36,7 @@ nix = { workspace = true }
 # D-Bus for Wayland/AT-SPI
 zbus = { workspace = true }
 ashpd = { workspace = true }
+atspi = { workspace = true }
 
 # Configuration
 config = { workspace = true }

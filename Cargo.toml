@@ -42,6 +42,7 @@ nix = { version = "0.29", features = ["socket", "user", "process"] }
 # D-Bus for Wayland/AT-SPI
 zbus = "5.12"
 ashpd = "0.9"
+atspi = "0.22"
 
 # Configuration
 config = "0.14"

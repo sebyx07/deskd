@@ -153,5 +153,53 @@ async fn process_request(request: Request) -> Response {
                 }),
             }
         }
+        Request::FindElement { name, role } => {
+            info!("Find element request: name={:?}, role={:?}", name, role);
+            Response::Data {
+                data: serde_json::json!({
+                    "element": null
+                }),
+            }
+        }
+        Request::ClickElement { name, button } => {
+            info!("Click element request: name={}, button={:?}", name, button);
+            Response::Success {
+                message: format!("Would click element: {}", name),
+            }
+        }
+        Request::DoubleClickElement { name } => {
+            info!("Double-click element request: name={}", name);
+            Response::Success {
+                message: format!("Would double-click element: {}", name),
+            }
+        }
+        Request::TypeIntoElement {
+            name,
+            text,
+            secure,
+        } => {
+            if secure.unwrap_or(false) {
+                info!("Type secure into element: name={}", name);
+            } else {
+                info!("Type into element: name={}, text={}", name, text);
+            }
+            Response::Success {
+                message: format!("Would type into element: {}", name),
+            }
+        }
+        Request::FocusElement { name } => {
+            info!("Focus element request: name={}", name);
+            Response::Success {
+                message: format!("Would focus element: {}", name),
+            }
+        }
+        Request::GetFocusedElement => {
+            info!("Get focused element request");
+            Response::Data {
+                data: serde_json::json!({
+                    "element": null
+                }),
+            }
+        }
     }
 }
