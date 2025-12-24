@@ -2,6 +2,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub database_path: String,
@@ -11,12 +12,14 @@ pub struct Config {
     pub input_timing: InputTiming,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub enum SessionDiscovery {
     Auto,
     Manual,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputTiming {
     pub typing_delay_ms: u64,
@@ -24,6 +27,7 @@ pub struct InputTiming {
     pub focus_timeout_ms: u64,
 }
 
+#[allow(dead_code)]
 impl Config {
     pub fn load() -> Result<Self> {
         todo!("Load configuration from file")
@@ -41,6 +45,7 @@ impl Config {
     }
 }
 
+#[allow(dead_code)]
 pub struct ConfigPaths {
     pub user_config: String,
     pub user_socket: String,

@@ -4,12 +4,14 @@ pub mod schema;
 pub mod tasks;
 pub mod workflows;
 
+#[allow(dead_code)]
 pub struct Database {
     // Connection pool will be added here
 }
 
+#[allow(dead_code)]
 impl Database {
-    pub fn new(path: &str) -> Result<Self> {
+    pub fn new(_path: &str) -> Result<Self> {
         todo!("Initialize database connection pool")
     }
 

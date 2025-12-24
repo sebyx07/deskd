@@ -79,7 +79,7 @@ enum QueryCommands {
 }
 
 fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let _cli = Cli::parse();
 
     // TODO: Connect to daemon via Unix socket and send command
 

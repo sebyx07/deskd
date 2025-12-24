@@ -1,6 +1,7 @@
 // Protocol definitions and message serialization
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Request {
     // Input operations
@@ -22,6 +23,7 @@ pub enum Request {
     GetTaskHistory { limit: Option<usize> },
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Response {
     Success { message: String },

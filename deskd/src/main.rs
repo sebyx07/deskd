@@ -1,13 +1,13 @@
 use anyhow::Result;
-use tracing::{info, error};
+use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod db;
 mod atspi;
-mod wayland;
+mod config;
+mod db;
 mod input;
 mod ipc;
-mod config;
+mod wayland;
 
 #[tokio::main]
 async fn main() -> Result<()> {
