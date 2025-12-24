@@ -54,8 +54,6 @@ impl FocusManager {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[tokio::test]
     #[ignore] // Requires AT-SPI bus to be running
     async fn test_focus_manager_creation() {

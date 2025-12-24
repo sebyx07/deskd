@@ -201,5 +201,89 @@ async fn process_request(request: Request) -> Response {
                 }),
             }
         }
+        Request::KeyPress { key } => {
+            info!("Key press request: {}", key);
+            Response::Success {
+                message: format!("Would press key: {}", key),
+            }
+        }
+        Request::KeyCombo { combo } => {
+            info!("Key combo request: {}", combo);
+            Response::Success {
+                message: format!("Would press key combo: {}", combo),
+            }
+        }
+        Request::KeySequence { keys } => {
+            info!("Key sequence request: {} keys", keys.len());
+            Response::Success {
+                message: format!("Would press {} keys", keys.len()),
+            }
+        }
+        Request::ClickAt { x, y, button } => {
+            let btn = button.as_deref().unwrap_or("left");
+            info!("Click at request: ({}, {}) with button: {}", x, y, btn);
+            Response::Success {
+                message: format!("Would click at ({}, {}) with {}", x, y, btn),
+            }
+        }
+        Request::Drag {
+            from_x,
+            from_y,
+            to_x,
+            to_y,
+        } => {
+            info!(
+                "Drag request: from ({}, {}) to ({}, {})",
+                from_x, from_y, to_x, to_y
+            );
+            Response::Success {
+                message: format!("Would drag from ({}, {}) to ({}, {})", from_x, from_y, to_x, to_y),
+            }
+        }
+        Request::Screenshot {
+            region,
+            include_cursor,
+        } => {
+            let reg = region.as_deref().unwrap_or("fullscreen");
+            let cursor = include_cursor.unwrap_or(false);
+            info!("Screenshot request: region={}, cursor={}", reg, cursor);
+            Response::Data {
+                data: serde_json::json!({
+                    "screenshot": "base64_encoded_data_here"
+                }),
+            }
+        }
+        Request::DetectCompositor => {
+            info!("Detect compositor request");
+            Response::Data {
+                data: serde_json::json!({
+                    "compositor": "Unknown",
+                    "is_wayland": false,
+                    "has_xwayland": false
+                }),
+            }
+        }
+        Request::GetCapabilities => {
+            info!("Get capabilities request");
+            Response::Data {
+                data: serde_json::json!({
+                    "has_portal": false,
+                    "has_ipc": false,
+                    "has_wlr_protocols": false,
+                    "supports_screenshots": false,
+                    "supports_input": false,
+                    "supports_clipboard": false
+                }),
+            }
+        }
+        Request::ClipboardHistory { limit } => {
+            let lim = limit.unwrap_or(10);
+            info!("Clipboard history request: limit={}", lim);
+            Response::Data {
+                data: serde_json::json!({
+                    "history": []
+                }),
+            }
+        }
     }
 }

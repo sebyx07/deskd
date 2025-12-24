@@ -20,6 +20,9 @@ pub struct Config {
 
     #[serde(default)]
     pub input_timing: InputTiming,
+
+    #[serde(default)]
+    pub wayland: WaylandConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -52,6 +55,40 @@ impl Default for InputTiming {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WaylandConfig {
+    #[serde(default)]
+    pub compositor: Option<String>,
+
+    #[serde(default = "default_input_methods")]
+    pub input_methods: Vec<String>,
+
+    #[serde(default = "default_retry_attempts")]
+    pub retry_attempts: usize,
+
+    #[serde(default = "default_retry_delay_ms")]
+    pub retry_delay_ms: u64,
+
+    #[serde(default = "default_portal_timeout_ms")]
+    pub portal_permission_timeout_ms: u64,
+
+    #[serde(default = "default_clipboard_history_size")]
+    pub clipboard_history_size: usize,
+}
+
+impl Default for WaylandConfig {
+    fn default() -> Self {
+        Self {
+            compositor: None, // Auto-detect
+            input_methods: default_input_methods(),
+            retry_attempts: default_retry_attempts(),
+            retry_delay_ms: default_retry_delay_ms(),
+            portal_permission_timeout_ms: default_portal_timeout_ms(),
+            clipboard_history_size: default_clipboard_history_size(),
+        }
+    }
+}
+
 // Default value functions
 fn default_database_path() -> String {
     expand_home("~/.local/share/deskd/state.db")
@@ -77,6 +114,32 @@ fn default_focus_timeout() -> u64 {
     1000
 }
 
+fn default_input_methods() -> Vec<String> {
+    vec![
+        "portal".to_string(),
+        "compositor_ipc".to_string(),
+        "libei".to_string(),
+        "ydotool".to_string(),
+        "xtest".to_string(),
+    ]
+}
+
+fn default_retry_attempts() -> usize {
+    3
+}
+
+fn default_retry_delay_ms() -> u64 {
+    100
+}
+
+fn default_portal_timeout_ms() -> u64 {
+    30000 // 30 seconds for user to respond to permission dialog
+}
+
+fn default_clipboard_history_size() -> usize {
+    100
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -85,6 +148,7 @@ impl Default for Config {
             log_level: default_log_level(),
             session_discovery: SessionDiscovery::default(),
             input_timing: InputTiming::default(),
+            wayland: WaylandConfig::default(),
         }
     }
 }

@@ -47,6 +47,22 @@ enum Commands {
     /// AT-SPI Element operations
     #[command(subcommand)]
     Element(ElementCommands),
+
+    /// Keyboard operations (Phase 3)
+    #[command(subcommand)]
+    Keyboard(KeyboardCommands),
+
+    /// Mouse operations (Phase 3)
+    #[command(subcommand)]
+    Mouse(MouseCommands),
+
+    /// Screenshot operations (Phase 3)
+    #[command(subcommand)]
+    Screenshot(ScreenshotCommands),
+
+    /// System detection (Phase 3)
+    #[command(subcommand)]
+    System(SystemCommands),
 }
 
 #[derive(Subcommand)]
@@ -74,6 +90,12 @@ enum ClipboardCommands {
 
     /// Set clipboard content
     Set { content: String },
+
+    /// Get clipboard history
+    History {
+        #[arg(short, long, default_value = "10")]
+        limit: usize,
+    },
 }
 
 #[derive(Subcommand)]
@@ -140,6 +162,60 @@ enum ElementCommands {
     GetFocused,
 }
 
+#[derive(Subcommand)]
+enum KeyboardCommands {
+    /// Press a single key
+    Key { key: String },
+
+    /// Press a key combination (e.g., "Ctrl+C")
+    Combo { combo: String },
+
+    /// Press a sequence of keys
+    Sequence { keys: Vec<String> },
+}
+
+#[derive(Subcommand)]
+enum MouseCommands {
+    /// Click at coordinates
+    ClickAt {
+        x: i32,
+        y: i32,
+        #[arg(short, long, default_value = "left")]
+        button: String,
+    },
+
+    /// Drag from one point to another
+    Drag {
+        from_x: i32,
+        from_y: i32,
+        to_x: i32,
+        to_y: i32,
+    },
+}
+
+#[derive(Subcommand)]
+enum ScreenshotCommands {
+    /// Take a screenshot
+    Take {
+        /// Region to capture (fullscreen, window, selection)
+        #[arg(short, long, default_value = "fullscreen")]
+        region: String,
+
+        /// Include cursor in screenshot
+        #[arg(short, long)]
+        cursor: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum SystemCommands {
+    /// Detect compositor type
+    DetectCompositor,
+
+    /// Get system capabilities
+    Capabilities,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -180,6 +256,10 @@ async fn main() -> Result<()> {
         Commands::Workflow(cmd) => handle_workflow_command(&client, cmd).await,
         Commands::Query(cmd) => handle_query_command(&client, cmd).await,
         Commands::Element(cmd) => handle_element_command(&client, cmd).await,
+        Commands::Keyboard(cmd) => handle_keyboard_command(&client, cmd).await,
+        Commands::Mouse(cmd) => handle_mouse_command(&client, cmd).await,
+        Commands::Screenshot(cmd) => handle_screenshot_command(&client, cmd).await,
+        Commands::System(cmd) => handle_system_command(&client, cmd).await,
     }
 }
 
@@ -210,6 +290,9 @@ async fn handle_clipboard_command(client: &Client, cmd: ClipboardCommands) -> Re
         ClipboardCommands::Get => json!({"type": "ClipboardGet"}),
         ClipboardCommands::Set { content } => {
             json!({"type": "ClipboardSet", "data": {"content": content}})
+        }
+        ClipboardCommands::History { limit } => {
+            json!({"type": "ClipboardHistory", "data": {"limit": Some(limit)}})
         }
     };
 
@@ -261,6 +344,67 @@ async fn handle_element_command(client: &Client, cmd: ElementCommands) -> Result
             json!({"type": "FocusElement", "data": {"name": name}})
         }
         ElementCommands::GetFocused => json!({"type": "GetFocusedElement"}),
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_keyboard_command(client: &Client, cmd: KeyboardCommands) -> Result<()> {
+    let request = match cmd {
+        KeyboardCommands::Key { key } => {
+            json!({"type": "KeyPress", "data": {"key": key}})
+        }
+        KeyboardCommands::Combo { combo } => {
+            json!({"type": "KeyCombo", "data": {"combo": combo}})
+        }
+        KeyboardCommands::Sequence { keys } => {
+            json!({"type": "KeySequence", "data": {"keys": keys}})
+        }
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_mouse_command(client: &Client, cmd: MouseCommands) -> Result<()> {
+    let request = match cmd {
+        MouseCommands::ClickAt { x, y, button } => {
+            json!({"type": "ClickAt", "data": {"x": x, "y": y, "button": Some(button)}})
+        }
+        MouseCommands::Drag {
+            from_x,
+            from_y,
+            to_x,
+            to_y,
+        } => {
+            json!({"type": "Drag", "data": {"from_x": from_x, "from_y": from_y, "to_x": to_x, "to_y": to_y}})
+        }
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_screenshot_command(client: &Client, cmd: ScreenshotCommands) -> Result<()> {
+    let request = match cmd {
+        ScreenshotCommands::Take { region, cursor } => {
+            json!({"type": "Screenshot", "data": {"region": Some(region), "include_cursor": Some(cursor)}})
+        }
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_system_command(client: &Client, cmd: SystemCommands) -> Result<()> {
+    let request = match cmd {
+        SystemCommands::DetectCompositor => json!({"type": "DetectCompositor"}),
+        SystemCommands::Capabilities => json!({"type": "GetCapabilities"}),
     };
 
     let response = client.send_request(&request.to_string()).await?;

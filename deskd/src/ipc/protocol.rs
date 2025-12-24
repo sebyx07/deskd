@@ -43,6 +43,37 @@ pub enum Request {
         name: String,
     },
     GetFocusedElement,
+
+    // Wayland operations (Phase 3)
+    KeyPress {
+        key: String,
+    },
+    KeyCombo {
+        combo: String, // e.g., "Ctrl+C"
+    },
+    KeySequence {
+        keys: Vec<String>,
+    },
+    ClickAt {
+        x: i32,
+        y: i32,
+        button: Option<String>, // "left", "right", "middle"
+    },
+    Drag {
+        from_x: i32,
+        from_y: i32,
+        to_x: i32,
+        to_y: i32,
+    },
+    Screenshot {
+        region: Option<String>, // "fullscreen", "window", or "selection"
+        include_cursor: Option<bool>,
+    },
+    DetectCompositor,
+    GetCapabilities,
+    ClipboardHistory {
+        limit: Option<usize>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
