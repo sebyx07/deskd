@@ -1,0 +1,50 @@
+# Phase 1: Core Foundation & Database
+
+## Project Setup
+- [ ] Initialize Cargo workspace with `deskd` daemon and `deskctl` CLI
+- [ ] Add core dependencies (tokio, serde, clap)
+- [ ] Set up project structure following Linux daemon conventions
+- [ ] Create basic README and LICENSE
+
+## Database Layer
+- [ ] Add SQLite dependencies (rusqlite, r2d2)
+- [ ] Implement database connection pooling
+- [ ] Create initial schema with core tables (tasks, task_history, auth_tokens)
+- [ ] Add schema_version table for migrations
+- [ ] Build migration system (auto-detect, apply, backup)
+- [ ] Implement database initialization logic
+- [ ] Add database path resolution (user vs system mode)
+
+## Configuration System
+- [ ] Design deskd.conf format (TOML or INI)
+- [ ] Implement config file parser
+- [ ] Add config path resolution (~/.config/deskd/ vs /etc/deskd/)
+- [ ] Support environment variable overrides
+- [ ] Define default configuration values
+- [ ] Add config validation on startup
+
+## Basic Daemon
+- [ ] Implement daemon startup/shutdown logic
+- [ ] Add Unix socket server (async with Tokio)
+- [ ] Create simple JSON-RPC or custom protocol
+- [ ] Implement basic request/response handling
+- [ ] Add systemd Type=notify support
+- [ ] Create daemonize functionality (fork, setsid, etc)
+- [ ] Implement graceful shutdown (SIGTERM handling)
+
+## CLI Tool Foundation
+- [ ] Build basic deskctl command structure
+- [ ] Add socket client connection logic
+- [ ] Implement request serialization/deserialization
+- [ ] Create subcommands (db, status)
+- [ ] Add `deskctl status` to check daemon health
+- [ ] Add `deskctl db init` command
+- [ ] Add `deskctl db backup` command
+
+## Testing & Build
+- [ ] Set up cargo test framework
+- [ ] Add unit tests for database operations
+- [ ] Add unit tests for config parsing
+- [ ] Create integration test skeleton
+- [ ] Set up CI configuration (GitHub Actions or similar)
+- [ ] Add cargo clippy and fmt checks

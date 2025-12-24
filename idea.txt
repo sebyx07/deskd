@@ -1,0 +1,844 @@
+# **deskd - Multi-User Desktop Automation Daemon (Enhanced)**
+
+## **Project Overview**
+Production-grade Rust daemon exposing Linux desktop control through AT-SPI, designed for multi-user, multi-desktop environments. Pure Wayland-native with X11 compatibility layer. Persistent state in SQLite. Follows standard Linux daemon conventions.
+
+---
+
+## **Multi-User Architecture**
+
+### **Daemon Deployment Models**
+
+**Per-User Instance (Primary)**
+- Each user runs own daemon: `systemd --user`
+- Socket: `~/.local/run/deskd.sock`
+- DB: `~/.local/share/deskd/state.db`
+- Config: `~/.config/deskd/deskd.conf`
+- Isolated by user boundaries
+- Most secure model
+
+**System-Wide Daemon (Alternative)**
+- Single daemon serving all users
+- Socket: `/var/run/deskd.sock`
+- DB: `/var/lib/deskd/state.db`
+- Multi-session awareness via D-Bus
+- Requires careful privilege separation
+- Authentication required even for Unix socket
+
+**Hybrid Model (Recommended)**
+- User daemons for desktop interaction
+- Optional system daemon for coordination
+- Shared task distribution
+- User daemons connect to system daemon for cross-user workflows
+
+### **User Session Detection**
+Daemon auto-detects:
+- Current session ID via `$XDG_SESSION_ID`
+- Display server via `$WAYLAND_DISPLAY` or `$DISPLAY`
+- User ID and home directory
+- Active seat via logind
+- Multiple sessions per user supported
+
+### **Multi-Desktop Support**
+Handle multiple desktops per user:
+- GNOME on :0 and KDE on :1
+- Each desktop has separate AT-SPI bus
+- Daemon connects to all active D-Bus sessions
+- Commands specify target desktop if ambiguous
+- Auto-detect primary desktop
+
+---
+
+## **SQLite Database Schema**
+
+### **Database Purpose**
+Persistent storage for:
+- Scheduled tasks and cron jobs
+- Task history and audit logs
+- Authentication tokens
+- Element cache (optional persistence)
+- User preferences per desktop
+- Multi-step workflow state
+
+### **Location**
+- User mode: `~/.local/share/deskd/state.db`
+- System mode: `/var/lib/deskd/state.db`
+- Configurable in deskd.conf
+
+### **Core Tables**
+
+**tasks**
+- Task queue persistence across restarts
+- Fields: id, user_id, desktop_id, method, params_json, priority, status, created_at, scheduled_for, result_json
+
+**task_history**
+- Audit log of completed tasks
+- Fields: id, task_id, user_id, desktop_id, method, params_json, result_json, success, error_message, executed_at, duration_ms, client_token
+
+**auth_tokens**
+- Token storage and metadata
+- Fields: token_hash, description, permissions, user_id, created_at, last_used_at, expires_at, rate_limit, revoked
+
+**workflows**
+- Multi-step workflow definitions
+- Fields: id, name, user_id, steps_json, created_at, updated_at
+
+**workflow_state**
+- Resume interrupted workflows
+- Fields: id, workflow_id, current_step, state_json, started_at, paused_at
+
+**element_cache**
+- Optional persistent cache across restarts
+- Fields: desktop_id, window_id, element_path, properties_json, cached_at, expires_at
+
+**desktop_sessions**
+- Track active desktop environments
+- Fields: session_id, user_id, desktop_type, display, d_bus_address, wayland_compositor, started_at, last_seen
+
+**preferences**
+- User settings per desktop
+- Fields: user_id, desktop_id, key, value, updated_at
+
+### **Database Operations**
+```bash
+# Initialize database
+deskctl db init
+
+# Backup
+deskctl db backup /path/to/backup.db
+
+# Vacuum and optimize
+deskctl db vacuum
+
+# View task history
+deskctl db query tasks --user alice --since "2025-01-01"
+
+# Export audit log
+deskctl db export --format json --output audit.json
+```
+
+---
+
+## **Enhanced Input Operations**
+
+### **Typing Operations**
+
+**Basic Typing**
+- `type` - Type text into focused element
+- Auto-detects input method (AT-SPI action vs direct input)
+- Handles special characters, Unicode
+- Configurable typing speed/delay
+- Supports international keyboard layouts
+
+**Advanced Typing**
+- `type_secure` - Type passwords (no logging, memory clearing)
+- `paste` - Paste from clipboard
+- `copy` - Copy text to clipboard
+- `select_all` - Select all text in field
+- `clear_field` - Clear input field
+
+**Keyboard Shortcuts**
+- `key_press` - Single key: "Escape", "Return", "Tab"
+- `key_combo` - Key combinations: "Ctrl+C", "Alt+F4", "Ctrl+Shift+T"
+- `key_sequence` - Sequence of keys: ["Alt+F", "Down", "Return"]
+
+**Text Validation**
+- Verify text was actually entered
+- Read back field contents
+- Compare expected vs actual
+- Retry on mismatch
+
+**Input Method Context**
+- Detect active input method (ibus, fcitx)
+- Handle IME for CJK languages
+- Wait for composition completion
+
+### **Clicking Operations**
+
+**Click Types**
+- `click` - Standard left click
+- `right_click` - Context menu
+- `middle_click` - Middle button
+- `double_click` - Double-click action
+- `triple_click` - Triple-click (text selection)
+
+**Advanced Clicking**
+- `click_at` - Click at exact coordinates
+- `click_element` - Click specific element by selector
+- `click_offset` - Click with offset from element center
+- `click_and_hold` - Press and hold for duration
+- `drag` - Drag from point A to point B
+- `scroll_to_click` - Scroll element into view then click
+
+**Click Verification**
+- Screenshot before/after
+- Verify element state changed
+- Check if expected result occurred
+- Retry logic on failure
+
+**Click Methods by Priority**
+1. AT-SPI action interface (preferred - semantic)
+2. Wayland input simulation (coordinates)
+3. X11 input simulation (fallback)
+4. Direct libinput injection (low-level)
+
+**Smart Clicking**
+- Auto-wait for element to be clickable
+- Retry if element moves during click
+- Handle animations and transitions
+- Detect if click was intercepted by modal
+
+### **Focus Operations**
+
+**Focus Management**
+- `focus_element` - Focus specific element
+- `focus_window` - Bring window to foreground
+- `focus_application` - Focus application (any window)
+- `focus_next` - Tab to next element
+- `focus_previous` - Shift+Tab to previous
+
+**Focus Detection**
+- `get_focused_element` - What currently has focus
+- `get_focused_window` - Active window
+- `wait_for_focus` - Wait until element receives focus
+
+**Focus Strategies**
+1. AT-SPI focus action (preferred)
+2. Window manager focus commands
+3. Click element to focus
+4. Keyboard navigation to focus
+
+**Focus Verification**
+- Confirm focus actually moved
+- Handle focus stealing prevention
+- Deal with modal dialogs blocking focus
+- Retry if focus rejected
+
+**Focus Context**
+- Save current focus before operation
+- Restore focus after operation
+- Handle focus lost to other applications
+- Track focus history per desktop
+
+---
+
+## **Wayland Native Support**
+
+### **Wayland-First Design**
+
+**No X11 Dependency**
+- All features work on pure Wayland
+- X11 support via XWayland detection
+- Never assume X11 is available
+
+**Compositor Integration**
+Auto-detect and use compositor protocols:
+- wlr-layer-shell (wlroots compositors: Sway, Hyprland)
+- xdg-activation (focus management)
+- ext-session-lock (lock screen handling)
+- wlr-screencopy (screenshots)
+- wlr-virtual-pointer (input simulation)
+
+**Compositor-Specific Plugins**
+- GNOME: RemoteDesktop portal, Mutter DBus
+- KDE: KWin scripts, KWayland protocols
+- Sway: IPC socket communication
+- Hyprland: IPC socket
+- wlroots: Generic protocols
+
+### **Wayland Input Simulation**
+
+**Method Priority**
+1. **RemoteDesktop Portal** (preferred, universal)
+   - Uses XDG Desktop Portals
+   - Works across all compositors
+   - Requires user permission grant (first time)
+   - Most secure and proper method
+
+2. **Compositor IPC** (compositor-specific)
+   - Sway: `swaymsg` commands via IPC
+   - Hyprland: hyprctl commands
+   - KWin: D-Bus methods
+   - Direct communication, fast
+
+3. **libei/libinput** (emerging standard)
+   - Emulated Input protocol
+   - Being adopted widely
+   - Low-level input injection
+
+4. **ydotool** (fallback)
+   - Userspace input tool
+   - Requires ydotoold daemon running
+   - Works with uinput permissions
+
+**Implementation Strategy**
+- Detect available method at startup
+- Try methods in priority order
+- Cache working method per compositor
+- Fail gracefully with clear error messages
+
+### **Wayland Screenshot Methods**
+
+**Method Priority**
+1. **ScreenCast Portal** (preferred)
+   - XDG Desktop Portal
+   - Works everywhere
+   - Requires permission
+
+2. **wlr-screencopy** (wlroots)
+   - Direct protocol
+   - Fast, no overhead
+   - Sway, Hyprland, etc.
+
+3. **Compositor-specific**
+   - GNOME: org.gnome.Shell.Screenshot DBus
+   - KDE: Spectacle DBus interface
+   - Compositor's native method
+
+4. **grim/slurp** (external tools)
+   - Call external binaries
+   - Universal fallback
+   - Slower but reliable
+
+**Screenshot Features**
+- Full screen
+- Specific output (monitor)
+- Window capture
+- Region/rectangle selection
+- Element bounding box
+- Cursor inclusion toggle
+
+### **Wayland Window Management**
+
+**Window Information**
+- Via foreign-toplevel-management protocol
+- Window list, properties, state
+- Focus, minimize, maximize, close
+- Move to workspace/output
+
+**Window Actions**
+- Focus window
+- Close window
+- Move between workspaces
+- Fullscreen toggle
+- Minimize/maximize
+
+### **Wayland Clipboard**
+
+**Data Control Protocol**
+- wlr-data-control for wlroots
+- Primary and clipboard selections
+- MIME type handling
+- Paste and copy operations
+
+**Portal Fallback**
+- Use clipboard portal if available
+- Works across all compositors
+
+---
+
+## **Multi-Desktop Session Management**
+
+### **Session Discovery**
+
+**Automatic Detection**
+Daemon discovers all sessions:
+- Query logind for all user sessions
+- Parse D-Bus session addresses
+- Detect Wayland compositor type
+- Identify X11 displays
+- Map session ID to desktop type
+
+**Session Registry**
+Maintain active session list in SQLite:
+- User ID
+- Session ID (from logind)
+- Desktop environment (GNOME, KDE, Sway, etc.)
+- Display server (Wayland compositor or X11)
+- D-Bus session bus address
+- Started/last seen timestamps
+
+### **Cross-Desktop Operations**
+
+**Target Specification**
+Commands can specify target:
+```json
+{
+  "method": "click",
+  "params": {
+    "element": "Submit",
+    "desktop": "gnome-wayland-0"  // optional
+  }
+}
+```
+
+**Auto-Targeting**
+If desktop not specified:
+- Use primary desktop (from config)
+- Use desktop where element found
+- Use most recently active desktop
+
+**Desktop Switching**
+- Can automate across multiple desktops
+- Switch VT if necessary (requires permissions)
+- Use compositor workspace switching
+- Handle multi-monitor setups
+
+### **Multi-Monitor Support**
+
+**Output Detection**
+- Enumerate all outputs (monitors)
+- Get resolution, position, scale
+- Identify primary output
+- Track hotplug events
+
+**Per-Monitor Operations**
+- Screenshot specific monitor
+- Click on specific monitor
+- Move windows between monitors
+- Handle different DPI/scaling
+
+**Coordinate System**
+- Global coordinates across all monitors
+- Per-monitor coordinates
+- Handle monitor arrangement
+- Scale-aware operations
+
+---
+
+## **Enhanced Configuration**
+
+### **Extended deskd.conf**
+
+```
+# Session management
+SessionDiscovery auto  # auto, manual
+PrimaryDesktop gnome-wayland-0
+MonitorSessions yes  # Track session changes
+
+# SQLite database
+DatabasePath ~/.local/share/deskd/state.db
+DatabaseBackupInterval 86400  # seconds
+DatabaseVacuumOnStartup no
+
+# Wayland specific
+WaylandCompositor auto  # auto, sway, gnome, kde, hyprland
+WaylandInputMethod portal  # portal, libei, ydotool, compositor
+WaylandScreenshotMethod portal  # portal, screencopy, compositor
+PortalPermissionTimeout 30  # seconds to wait for user
+
+# Input simulation
+TypingDelay 50  # milliseconds between keystrokes
+ClickDelay 100  # milliseconds after click before next action
+FocusTimeout 5000  # milliseconds to wait for focus
+RetryAttempts 3
+RetryDelay 1000  # milliseconds between retries
+
+# Clipboard integration
+ClipboardEnabled yes
+ClipboardHistory 10  # Keep last N clipboard items
+
+# Multi-desktop
+CrossDesktopEnabled yes
+AutoSwitchDesktop no  # Switch to desktop for operation
+DesktopSwitchDelay 500  # milliseconds after switch
+
+# Task persistence
+PersistQueueOnShutdown yes
+MaxHistoryAge 2592000  # 30 days in seconds
+AutoCleanupHistory yes
+```
+
+---
+
+## **Enhanced Protocol Methods**
+
+### **Typing Methods**
+- `type(text, secure=false, speed=default)`
+- `type_at_element(element, text, clear_first=false)`
+- `key_press(key)`
+- `key_combo(keys)`
+- `key_sequence(sequence)`
+- `paste(clear_first=false)`
+- `copy()`
+- `select_all()`
+- `clear_field(element)`
+
+### **Clicking Methods**
+- `click(element_or_coords, button=left, verify=true)`
+- `double_click(element_or_coords)`
+- `right_click(element_or_coords)`
+- `middle_click(element_or_coords)`
+- `click_and_hold(coords, duration)`
+- `drag(from_coords, to_coords, duration)`
+- `scroll_click(element)` - Scroll into view then click
+
+### **Focus Methods**
+- `focus(element)`
+- `focus_window(window_id)`
+- `focus_application(app_name)`
+- `get_focused_element()`
+- `get_focused_window()`
+- `wait_for_focus(element, timeout)`
+- `restore_focus()` - Restore saved focus
+- `tab_to(element)` - Use tab navigation
+
+### **Multi-Desktop Methods**
+- `list_desktops()` - All active desktop sessions
+- `get_current_desktop()`
+- `set_primary_desktop(desktop_id)`
+- `switch_desktop(desktop_id)`
+- `execute_on_desktop(desktop_id, method, params)`
+
+### **Clipboard Methods**
+- `clipboard_get()` - Read clipboard
+- `clipboard_set(text)` - Write clipboard
+- `clipboard_history()` - Recent clipboard items
+- `clipboard_clear()`
+
+### **Database Methods**
+- `db_query(sql, params)` - Direct SQL query
+- `get_task_history(filters)` - Query history
+- `get_workflow(id)` - Retrieve workflow
+- `save_workflow(definition)` - Store workflow
+- `resume_workflow(id)` - Continue paused workflow
+
+---
+
+## **Enhanced CLI Tool (deskctl)**
+
+### **Desktop Management**
+```bash
+# List all desktop sessions
+deskctl desktop list
+
+# Show current desktop
+deskctl desktop current
+
+# Set primary desktop
+deskctl desktop set-primary gnome-wayland-0
+
+# Execute on specific desktop
+deskctl --desktop kde-x11-1 click "Submit"
+```
+
+### **Input Commands**
+```bash
+# Typing
+deskctl type "Hello World"
+deskctl type --secure "password123"  # No logging
+deskctl type --speed slow "Careful typing"
+
+# Clicking
+deskctl click "Submit"
+deskctl click --button right "File"
+deskctl double-click "folder.txt"
+deskctl click --coords 100,200
+
+# Focus
+deskctl focus "Username"
+deskctl focus --window "Firefox"
+
+# Keyboard
+deskctl key "Escape"
+deskctl key "Ctrl+C"
+deskctl key "Alt+F4"
+```
+
+### **Clipboard Commands**
+```bash
+# Read clipboard
+deskctl clipboard get
+
+# Write clipboard
+deskctl clipboard set "Copy this text"
+
+# History
+deskctl clipboard history
+
+# Clear
+deskctl clipboard clear
+```
+
+### **Workflow Commands**
+```bash
+# Save workflow
+deskctl workflow save login.json
+
+# List workflows
+deskctl workflow list
+
+# Execute workflow
+deskctl workflow run login
+
+# Pause/resume
+deskctl workflow pause <id>
+deskctl workflow resume <id>
+```
+
+### **Database Commands**
+```bash
+# Query history
+deskctl db history --user alice --since "1 day ago"
+
+# Statistics
+deskctl db stats
+
+# Cleanup old records
+deskctl db cleanup --older-than "30 days"
+
+# Backup
+deskctl db backup backup.db
+```
+
+---
+
+## **Permission & Security Model**
+
+### **Wayland Portal Permissions**
+
+**First-Time Setup**
+When daemon starts:
+1. Request RemoteDesktop portal access
+2. User sees system dialog
+3. Grant permission (one-time)
+4. Permission stored in portal settings
+5. Daemon can now control desktop
+
+**Permission Scoping**
+- Screen capture permission
+- Remote control permission
+- Clipboard access permission
+- Each can be granted separately
+
+**Permission Management**
+```bash
+# Check portal permissions
+deskctl permissions status
+
+# Request specific permission
+deskctl permissions request remote-desktop
+
+# Revoke permission
+deskctl permissions revoke screen-capture
+```
+
+### **Multi-User Security**
+
+**User Isolation**
+- Each user daemon isolated by systemd
+- Socket permissions prevent cross-user access
+- Database permissions user-restricted
+- No shared memory between users
+
+**System Daemon Security**
+If running system-wide daemon:
+- Authenticate even Unix socket connections
+- Track which user owns each session
+- Verify user can access target desktop
+- Audit all cross-user operations
+- Require explicit cross-user permission
+
+### **Input Security**
+
+**Secure Typing**
+- `type_secure` method
+- Text not logged
+- Memory zeroed after use
+- Audit log shows only "secure input" not content
+- No cache of typed content
+
+**Clipboard Security**
+- Optional clipboard isolation per user
+- Clear clipboard after operation
+- No clipboard history for secure operations
+- Audit clipboard access
+
+---
+
+## **Systemd Integration - Enhanced**
+
+### **User Service with Desktop Session**
+```
+[Unit]
+Description=Desktop Automation Daemon (User)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/deskd --user
+Restart=on-failure
+RestartSec=5s
+
+# Wait for Wayland compositor
+ExecStartPre=/bin/sh -c 'while [ -z "$WAYLAND_DISPLAY" ]; do sleep 0.5; done'
+
+# Environment
+Environment=XDG_RUNTIME_DIR=%t
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+### **Multi-Desktop Support via Templates**
+Service template for each desktop:
+```
+# /lib/systemd/user/deskd@.service
+[Unit]
+Description=Desktop Automation for %I
+After=graphical-session.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/deskd --desktop %i
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+Usage:
+```bash
+systemctl --user start deskd@gnome
+systemctl --user start deskd@kde
+```
+
+---
+
+## **Database Migration & Versioning**
+
+### **Schema Versioning**
+Track schema version in database:
+```sql
+CREATE TABLE schema_version (
+    version INTEGER PRIMARY KEY,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### **Automatic Migration**
+On daemon startup:
+- Check current schema version
+- Apply pending migrations
+- Update version number
+- Backup before migration
+
+### **Migration Scripts**
+```bash
+# Stored in /usr/share/deskd/migrations/
+001_initial.sql
+002_add_workflows.sql
+003_add_sessions.sql
+```
+
+### **Manual Migration**
+```bash
+# Check version
+deskctl db version
+
+# Apply migrations
+deskctl db migrate
+
+# Rollback (if supported)
+deskctl db migrate --to 2
+```
+
+---
+
+## **Performance Considerations**
+
+### **Connection Pooling**
+- SQLite connection pool (via r2d2 crate)
+- AT-SPI connection reuse
+- HTTP keep-alive for remote clients
+
+### **Batch Operations**
+Database transactions for batches:
+- Begin transaction
+- Execute all operations
+- Commit or rollback
+- Much faster than individual commits
+
+### **Caching Strategy**
+Multi-level cache:
+1. In-memory UI tree (fast, volatile)
+2. SQLite cache (persistent, slower)
+3. Expiration based on events
+4. Configurable cache TTL
+
+### **Async Everything**
+- All I/O is async (Tokio)
+- Non-blocking database access
+- Concurrent request handling
+- Event-driven architecture
+
+---
+
+## **Error Recovery**
+
+### **Desktop Session Recovery**
+If desktop session crashes:
+- Detect session disconnection
+- Remove from active sessions
+- Clean up resources
+- Automatically reconnect when session returns
+- Resume queued tasks if applicable
+
+### **Database Recovery**
+If database corrupted:
+- Detect corruption on startup
+- Attempt automatic repair
+- Fall back to backup
+- Initialize fresh if needed
+- Never lose security-critical data (tokens)
+
+### **Input Failure Recovery**
+If input simulation fails:
+- Try alternative input method
+- Log detailed error
+- Suggest user action
+- Retry with different approach
+- Return clear error to client
+
+---
+
+## **Key Differentiators**
+
+**Why This Instead of Dogtail:**
+- Wayland-native (Dogtail is X11-focused with Wayland hacks)
+- Multi-user from ground up
+- Persistent state in SQLite
+- Production daemon architecture
+- Multiple input methods with fallbacks
+- Comprehensive typing/clicking/focus operations
+
+**Why This Instead of Computer Use APIs:**
+- Local, no cloud dependency
+- Accessibility-first, not vision-based
+- Multi-desktop session support
+- Open source, fully auditable
+- Works offline
+- No per-API-call costs
+
+**Why This Instead of AskUI/Commercial:**
+- Free and open source
+- Standard Linux daemon conventions
+- SQLite for transparency
+- No vendor lock-in
+- Community-driven development
+
+---
+
+## **Success Criteria**
+
+- Can control all GTK/Qt applications via AT-SPI
+- Works on pure Wayland without X11
+- Handles multiple users simultaneously
+- Persists tasks across restarts
+- Focus, type, click operations 99%+ reliable
+- Sub-100ms latency for most operations
+- Audit trail of all operations in SQLite
+- Installs via apt with zero manual config
+- Behaves like standard system daemon (sshd, nginx style)

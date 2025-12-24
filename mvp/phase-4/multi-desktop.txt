@@ -1,0 +1,77 @@
+# Phase 4: Multi-Desktop & Session Management
+
+## Session Discovery
+- [ ] Add logind integration (via zbus)
+- [ ] Query all active user sessions
+- [ ] Extract D-Bus session bus addresses
+- [ ] Detect desktop type per session (GNOME, KDE, etc)
+- [ ] Identify display server per session (Wayland/X11)
+- [ ] Map session IDs to desktop environments
+
+## Desktop Session Tracking
+- [ ] Add desktop_sessions table to database
+- [ ] Implement session registry (user_id, session_id, desktop_type)
+- [ ] Track session start/last_seen timestamps
+- [ ] Store D-Bus and display addresses per session
+- [ ] Implement session monitoring (detect crashes/logouts)
+- [ ] Auto-cleanup disconnected sessions
+
+## Multi-Desktop AT-SPI
+- [ ] Connect to AT-SPI bus for each desktop session
+- [ ] Maintain separate AT-SPI connections per desktop
+- [ ] Route operations to correct desktop's AT-SPI bus
+- [ ] Handle per-desktop element caching
+- [ ] Implement cross-desktop element search
+
+## Desktop Targeting
+- [ ] Add "desktop" parameter to protocol methods
+- [ ] Implement primary desktop selection logic
+- [ ] Add auto-targeting (use desktop where element found)
+- [ ] Support targeting by session ID or desktop type
+- [ ] Add desktop switching capabilities
+
+## Multi-Monitor Support
+- [ ] Enumerate all outputs (monitors) per desktop
+- [ ] Get resolution, position, scale per monitor
+- [ ] Implement global coordinate system
+- [ ] Add per-monitor coordinate transformation
+- [ ] Handle monitor hotplug events
+- [ ] Support different DPI scaling per monitor
+
+## Window Management
+- [ ] Implement window list retrieval (via compositor)
+- [ ] Add `focus_window(window_id)` method
+- [ ] Add `focus_application(app_name)` method
+- [ ] Implement window state queries (minimized, maximized)
+- [ ] Add window close/minimize/maximize operations
+- [ ] Support moving windows between monitors/workspaces
+
+## User Daemon vs System Daemon
+- [ ] Implement per-user daemon mode (systemd --user)
+- [ ] Implement system-wide daemon mode (optional)
+- [ ] Add privilege separation for system daemon
+- [ ] Implement authentication for system daemon socket
+- [ ] Add user permission checks for cross-user operations
+- [ ] Audit cross-user operations in task_history
+
+## CLI for Multi-Desktop
+- [ ] Add `deskctl desktop list` command
+- [ ] Add `deskctl desktop current` command
+- [ ] Add `deskctl desktop set-primary <id>` command
+- [ ] Add `--desktop <id>` flag to all commands
+- [ ] Add `deskctl desktop info <id>` for debugging
+
+## Configuration
+- [ ] Add SessionDiscovery config option (auto/manual)
+- [ ] Add PrimaryDesktop setting
+- [ ] Add CrossDesktopEnabled flag
+- [ ] Add AutoSwitchDesktop setting
+- [ ] Add per-desktop preferences support
+
+## Testing
+- [ ] Test session discovery with multiple users
+- [ ] Test multi-desktop targeting
+- [ ] Test monitor enumeration
+- [ ] Test coordinate transformation across monitors
+- [ ] Test user daemon isolation
+- [ ] Test system daemon authentication

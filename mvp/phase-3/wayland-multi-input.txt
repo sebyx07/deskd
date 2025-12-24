@@ -1,0 +1,78 @@
+# Phase 3: Wayland Support & Multi-Input Methods
+
+## Wayland Detection
+- [ ] Detect Wayland vs X11 environment ($WAYLAND_DISPLAY)
+- [ ] Identify compositor type (GNOME, KDE, Sway, Hyprland)
+- [ ] Detect available Wayland protocols
+- [ ] Add XWayland detection for legacy apps
+- [ ] Create compositor capability registry
+
+## RemoteDesktop Portal
+- [ ] Add xdg-desktop-portal dependencies (zbus)
+- [ ] Implement RemoteDesktop portal client
+- [ ] Request remote desktop permission (user prompt)
+- [ ] Handle permission storage and reuse
+- [ ] Implement portal-based input injection (keyboard, mouse)
+- [ ] Add portal-based screenshot capture
+- [ ] Handle portal errors and user denials
+
+## Compositor-Specific IPC
+- [ ] Implement Sway IPC client (typing, clicking)
+- [ ] Implement Hyprland IPC client
+- [ ] Add GNOME Mutter DBus methods
+- [ ] Add KDE KWin DBus/script support
+- [ ] Create compositor plugin system
+- [ ] Add fallback chain configuration
+
+## Alternative Input Methods
+- [ ] Add libei/libinput integration (if available)
+- [ ] Implement ydotool client (requires ydotoold daemon)
+- [ ] Add X11 input fallback via XTest (for XWayland)
+- [ ] Create input method priority system
+- [ ] Implement auto-detection of working method
+- [ ] Cache working method per compositor
+
+## Wayland Screenshot
+- [ ] Implement ScreenCast portal method
+- [ ] Add wlr-screencopy protocol support
+- [ ] Add compositor-specific screenshot methods
+- [ ] Implement grim/slurp external tool fallback
+- [ ] Support full screen, window, region captures
+- [ ] Add cursor inclusion toggle
+
+## Coordinate-Based Input
+- [ ] Implement `click_at(x, y)` using Wayland input
+- [ ] Add `drag(from_x, from_y, to_x, to_y)`
+- [ ] Implement coordinate transformation (monitor offsets)
+- [ ] Add DPI/scaling awareness
+- [ ] Handle multi-monitor coordinate systems
+
+## Keyboard Shortcuts
+- [ ] Implement `key_press(key)` method
+- [ ] Implement `key_combo(keys)` (e.g., "Ctrl+C")
+- [ ] Add `key_sequence(sequence)` support
+- [ ] Handle modifier keys properly
+- [ ] Add keyboard layout mapping
+
+## Clipboard Integration
+- [ ] Implement wlr-data-control protocol for clipboard
+- [ ] Add clipboard portal fallback
+- [ ] Implement `clipboard_get()` method
+- [ ] Implement `clipboard_set(text)` method
+- [ ] Add MIME type handling
+- [ ] Support clipboard history (last N items in DB)
+
+## Configuration
+- [ ] Add WaylandCompositor config option
+- [ ] Add WaylandInputMethod preference
+- [ ] Add RetryAttempts and RetryDelay settings
+- [ ] Add PortalPermissionTimeout config
+- [ ] Document Wayland configuration options
+
+## Testing
+- [ ] Test portal integration (manual, requires user)
+- [ ] Test compositor detection on different environments
+- [ ] Test fallback chain (portal → IPC → ydotool)
+- [ ] Unit tests for coordinate transformations
+- [ ] Test clipboard operations
+- [ ] Test input method auto-selection

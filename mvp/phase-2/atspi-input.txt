@@ -1,0 +1,61 @@
+# Phase 2: AT-SPI Integration & Basic Input
+
+## AT-SPI Foundation
+- [ ] Add atspi dependency (atspi-rs or zbus-based)
+- [ ] Implement AT-SPI connection to accessibility bus
+- [ ] Create UI element discovery (search by name, role, state)
+- [ ] Build accessibility tree traversal
+- [ ] Add element property extraction (name, role, state, bounds)
+- [ ] Implement element caching with TTL
+- [ ] Handle AT-SPI connection errors gracefully
+
+## Basic Typing
+- [ ] Implement `type` method via AT-SPI action interface
+- [ ] Add special character handling (Unicode support)
+- [ ] Implement configurable typing delay
+- [ ] Add keyboard layout detection
+- [ ] Create `type_secure` with memory zeroing and no logging
+- [ ] Add text validation (read back field contents)
+- [ ] Implement retry logic on typing failure
+
+## Basic Clicking
+- [ ] Implement `click` via AT-SPI action interface
+- [ ] Add `double_click` support
+- [ ] Add `right_click` support
+- [ ] Implement element visibility checks before clicking
+- [ ] Add click verification (state change detection)
+- [ ] Create retry logic with configurable attempts
+- [ ] Handle click failures gracefully
+
+## Focus Management
+- [ ] Implement `focus_element` via AT-SPI
+- [ ] Add `get_focused_element` method
+- [ ] Implement focus verification
+- [ ] Add `wait_for_focus` with timeout
+- [ ] Create focus state tracking
+- [ ] Handle focus stealing prevention
+
+## Protocol Methods
+- [ ] Define JSON-RPC or custom protocol spec
+- [ ] Implement `type(text, secure)` endpoint
+- [ ] Implement `click(element, button)` endpoint
+- [ ] Implement `focus(element)` endpoint
+- [ ] Add `find_element(selector)` endpoint
+- [ ] Add error response formatting
+- [ ] Document protocol in separate spec file
+
+## CLI Commands
+- [ ] Add `deskctl type "text"` command
+- [ ] Add `deskctl type --secure "password"` command
+- [ ] Add `deskctl click "Button Name"` command
+- [ ] Add `deskctl focus "Element"` command
+- [ ] Add `deskctl find "Element"` for debugging
+- [ ] Add verbose output mode for troubleshooting
+
+## Testing
+- [ ] Mock AT-SPI interface for testing
+- [ ] Unit tests for element discovery
+- [ ] Unit tests for typing logic
+- [ ] Unit tests for clicking logic
+- [ ] Integration tests with real GTK apps (if feasible)
+- [ ] Test error handling paths

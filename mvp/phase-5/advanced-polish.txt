@@ -1,0 +1,124 @@
+# Phase 5: Advanced Features & Polish
+
+## Workflow System
+- [ ] Add workflows and workflow_state tables
+- [ ] Implement workflow definition format (JSON)
+- [ ] Add workflow parser and validator
+- [ ] Implement workflow execution engine
+- [ ] Add workflow pause/resume support
+- [ ] Track workflow state in database
+- [ ] Add workflow error handling and rollback
+
+## Advanced Clicking
+- [ ] Implement `scroll_to_click` (scroll into view)
+- [ ] Add `click_and_hold(duration)` support
+- [ ] Implement offset clicking (click with offset from center)
+- [ ] Add triple-click support
+- [ ] Handle animations and transitions (wait for stable position)
+- [ ] Detect modal dialogs blocking clicks
+
+## Advanced Typing
+- [ ] Add IME support (ibus, fcitx detection)
+- [ ] Handle CJK input methods
+- [ ] Wait for composition completion
+- [ ] Add `clear_field` method
+- [ ] Add `select_all` method
+- [ ] Implement `paste` with clipboard integration
+- [ ] Add typing speed variations (slow, medium, fast)
+
+## Element Cache Optimization
+- [ ] Add element_cache table persistence
+- [ ] Implement cache expiration logic
+- [ ] Add event-based cache invalidation
+- [ ] Implement intelligent pre-fetching
+- [ ] Add cache hit/miss statistics
+- [ ] Optimize cache lookup performance
+
+## Task Queue & History
+- [ ] Implement task queue persistence
+- [ ] Add task priority handling
+- [ ] Support scheduled tasks (scheduled_for field)
+- [ ] Implement task history retention policy
+- [ ] Add auto-cleanup of old history
+- [ ] Create task statistics and reporting
+
+## Permission System
+- [ ] Implement portal permission status checking
+- [ ] Add `deskctl permissions status` command
+- [ ] Add `deskctl permissions request <type>` command
+- [ ] Document permission requirements
+- [ ] Handle permission revocation gracefully
+- [ ] Add permission troubleshooting guide
+
+## Error Recovery
+- [ ] Implement desktop session crash detection
+- [ ] Add automatic session reconnection
+- [ ] Implement database corruption detection
+- [ ] Add automatic database repair logic
+- [ ] Create fallback to backup database
+- [ ] Implement input failure recovery with alternative methods
+
+## Security Hardening
+- [ ] Audit all logging for sensitive data leaks
+- [ ] Implement secure memory zeroing for passwords
+- [ ] Add rate limiting to prevent abuse
+- [ ] Implement authentication tokens (auth_tokens table)
+- [ ] Add token expiration and rotation
+- [ ] Create audit trail for all operations
+
+## Systemd Integration
+- [ ] Create systemd user service unit file
+- [ ] Add systemd service template for multi-desktop
+- [ ] Implement Type=notify protocol
+- [ ] Add proper service dependencies
+- [ ] Create ExecStartPre wait for compositor
+- [ ] Add Restart=on-failure logic
+- [ ] Document systemd installation
+
+## CLI Enhancements
+- [ ] Add `deskctl workflow save/list/run` commands
+- [ ] Add `deskctl db history` command with filters
+- [ ] Add `deskctl db stats` for statistics
+- [ ] Add `deskctl db cleanup` for maintenance
+- [ ] Add `deskctl db vacuum` command
+- [ ] Implement verbose/debug output modes
+- [ ] Add shell completion (bash, zsh, fish)
+
+## Documentation
+- [ ] Write comprehensive README
+- [ ] Create INSTALL guide (package vs source)
+- [ ] Document protocol specification
+- [ ] Create configuration reference
+- [ ] Write troubleshooting guide
+- [ ] Add example workflows
+- [ ] Create API documentation
+
+## Performance Optimization
+- [ ] Profile and optimize hot paths
+- [ ] Implement connection pooling for all resources
+- [ ] Add batch operation support with transactions
+- [ ] Optimize database queries with indexes
+- [ ] Implement async I/O everywhere
+- [ ] Measure and optimize to sub-100ms latency
+- [ ] Add performance benchmarks
+
+## Packaging
+- [ ] Create Debian package (.deb)
+- [ ] Create RPM package (.rpm)
+- [ ] Create Arch PKGBUILD
+- [ ] Add installation scripts
+- [ ] Create uninstallation scripts
+- [ ] Add migration directory structure
+- [ ] Set up package repository
+
+## Final Testing
+- [ ] Test on GNOME Wayland
+- [ ] Test on KDE Plasma Wayland
+- [ ] Test on Sway
+- [ ] Test on Hyprland
+- [ ] Test multi-user scenarios
+- [ ] Test cross-desktop operations
+- [ ] Verify 99%+ reliability for core operations
+- [ ] Performance testing (sub-100ms target)
+- [ ] Security audit
+- [ ] Create integration test suite
