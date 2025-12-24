@@ -8,6 +8,9 @@ repository.workspace = true
 homepage.workspace = true
 
 [dependencies]
+# Async runtime
+tokio = { workspace = true }
+
 # CLI
 clap = { workspace = true }
 

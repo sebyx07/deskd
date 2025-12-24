@@ -1,8 +1,11 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use serde_json::json;
 
 mod client;
 mod commands;
+
+use client::Client;
 
 #[derive(Parser)]
 #[command(name = "deskctl")]
@@ -18,6 +21,9 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Check daemon status
+    Status,
+
     /// Input operations
     #[command(subcommand)]
     Input(InputCommands),
@@ -78,10 +84,100 @@ enum QueryCommands {
     History { limit: Option<usize> },
 }
 
-fn main() -> Result<()> {
-    let _cli = Cli::parse();
+#[tokio::main]
+async fn main() -> Result<()> {
+    let cli = Cli::parse();
 
-    // TODO: Connect to daemon via Unix socket and send command
+    // Expand home directory in socket path
+    let socket_path = if cli.socket.starts_with("~/") {
+        if let Ok(home) = std::env::var("HOME") {
+            cli.socket.replacen("~", &home, 1)
+        } else {
+            cli.socket
+        }
+    } else {
+        cli.socket
+    };
 
+    let client = Client::new(socket_path);
+
+    match cli.command {
+        Commands::Status => {
+            // Try to connect to daemon
+            match client
+                .send_request(&json!({"type": "ListDesktops"}).to_string())
+                .await
+            {
+                Ok(_) => {
+                    println!("Daemon is running");
+                    Ok(())
+                }
+                Err(e) => {
+                    println!("Daemon is not running: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Input(cmd) => handle_input_command(&client, cmd).await,
+        Commands::Desktop(cmd) => handle_desktop_command(&client, cmd).await,
+        Commands::Clipboard(cmd) => handle_clipboard_command(&client, cmd).await,
+        Commands::Workflow(cmd) => handle_workflow_command(&client, cmd).await,
+        Commands::Query(cmd) => handle_query_command(&client, cmd).await,
+    }
+}
+
+async fn handle_input_command(client: &Client, cmd: InputCommands) -> Result<()> {
+    let request = match cmd {
+        InputCommands::Type { text } => json!({"type": "Type", "data": {"text": text}}),
+        InputCommands::TypeSecure { text } => json!({"type": "TypeSecure", "data": {"text": text}}),
+        InputCommands::Click { x, y } => json!({"type": "Click", "data": {"x": x, "y": y}}),
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_desktop_command(client: &Client, cmd: DesktopCommands) -> Result<()> {
+    let request = match cmd {
+        DesktopCommands::List => json!({"type": "ListDesktops"}),
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_clipboard_command(client: &Client, cmd: ClipboardCommands) -> Result<()> {
+    let request = match cmd {
+        ClipboardCommands::Get => json!({"type": "ClipboardGet"}),
+        ClipboardCommands::Set { content } => {
+            json!({"type": "ClipboardSet", "data": {"content": content}})
+        }
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
+    Ok(())
+}
+
+async fn handle_workflow_command(_client: &Client, cmd: WorkflowCommands) -> Result<()> {
+    match cmd {
+        WorkflowCommands::List => {
+            println!("Workflow list not yet implemented");
+            Ok(())
+        }
+    }
+}
+
+async fn handle_query_command(client: &Client, cmd: QueryCommands) -> Result<()> {
+    let request = match cmd {
+        QueryCommands::History { limit } => {
+            json!({"type": "GetTaskHistory", "data": {"limit": limit}})
+        }
+    };
+
+    let response = client.send_request(&request.to_string()).await?;
+    println!("{}", response);
     Ok(())
 }
