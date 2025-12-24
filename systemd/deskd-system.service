@@ -1,0 +1,29 @@
+[Unit]
+Description=deskd - Linux Desktop Control Daemon (System-Wide Service)
+Documentation=https://github.com/sebyx07/deskd
+After=multi-user.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/deskd --system
+Restart=on-failure
+RestartSec=5
+User=deskd
+Group=deskd
+
+# Environment
+Environment=RUST_LOG=deskd=info
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/deskd /var/run/deskd
+
+# System call filtering
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,77 @@
+# deskd Configuration File
+# Copy to ~/.config/deskd/deskd.conf (user) or /etc/deskd/deskd.conf (system)
+
+# Database path
+# User default: ~/.local/share/deskd/state.db
+# System default: /var/lib/deskd/state.db
+database_path = "~/.local/share/deskd/state.db"
+
+# Unix socket path
+# User default: ~/.local/run/deskd.sock
+# System default: /var/run/deskd.sock
+socket_path = "~/.local/run/deskd.sock"
+
+# Logging level (error, warn, info, debug, trace)
+log_level = "info"
+
+# Session discovery mode (auto or manual)
+session_discovery = "auto"
+
+# Input timing configuration
+[input_timing]
+# Delay between keystrokes when typing (milliseconds)
+typing_delay_ms = 10
+
+# Delay after clicking (milliseconds)
+click_delay_ms = 50
+
+# Timeout for focus operations (milliseconds)
+focus_timeout_ms = 1000
+
+# Wayland compositor preferences
+[wayland]
+# Preferred method: portal, compositor-specific, libei, ydotool
+preferred_method = "portal"
+
+# Enable fallback to other methods if preferred fails
+enable_fallback = true
+
+# AT-SPI configuration
+[atspi]
+# Cache element information
+enable_cache = true
+
+# Cache expiration time (seconds)
+cache_expiration_seconds = 300
+
+# Clipboard configuration
+[clipboard]
+# Enable clipboard history
+enable_history = true
+
+# Maximum history entries
+max_history_entries = 100
+
+# Task persistence
+[tasks]
+# Automatically clean up completed tasks older than (days)
+cleanup_after_days = 30
+
+# Maximum concurrent tasks
+max_concurrent = 10
+
+# Multi-desktop configuration
+[desktop]
+# Primary desktop selection (auto or specific session ID)
+primary_desktop = "auto"
+
+# Enable cross-desktop operations
+enable_cross_desktop = false
+
+# Security (system-wide daemon only)
+[security]
+# Require authentication for all operations
+require_auth = true
+
+# Token expiration time (hours)
+token_expiration_hours = 24

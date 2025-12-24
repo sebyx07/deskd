@@ -1,0 +1,24 @@
+[Unit]
+Description=deskd - Linux Desktop Control Daemon (User Service)
+Documentation=https://github.com/sebyx07/deskd
+After=graphical-session.target
+Requires=graphical-session.target
+
+[Service]
+Type=notify
+ExecStart=%h/.local/bin/deskd
+Restart=on-failure
+RestartSec=5
+
+# Environment
+Environment=RUST_LOG=deskd=info
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/share/deskd %h/.local/run
+
+[Install]
+WantedBy=graphical-session.target
