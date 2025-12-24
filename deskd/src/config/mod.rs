@@ -22,17 +22,12 @@ pub struct Config {
     pub input_timing: InputTiming,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SessionDiscovery {
+    #[default]
     Auto,
     Manual,
-}
-
-impl Default for SessionDiscovery {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -172,6 +167,7 @@ impl Config {
     }
 
     /// Get configuration paths for reference
+    #[allow(dead_code)]
     pub fn default_paths() -> ConfigPaths {
         ConfigPaths {
             user_config: expand_home("~/.config/deskd/deskd.conf"),
@@ -184,6 +180,7 @@ impl Config {
     }
 }
 
+#[allow(dead_code)]
 pub struct ConfigPaths {
     pub user_config: String,
     pub user_socket: String,
@@ -196,7 +193,7 @@ pub struct ConfigPaths {
 /// Expand ~ to home directory
 fn expand_home(path: &str) -> String {
     if path.starts_with("~/") {
-        if let Some(home) = std::env::var("HOME").ok() {
+        if let Ok(home) = std::env::var("HOME") {
             return path.replacen("~", &home, 1);
         }
     }

@@ -103,6 +103,7 @@ impl Database {
     }
 
     /// Backup the database to a file
+    #[allow(dead_code)]
     pub fn backup(&self, backup_path: &str) -> Result<()> {
         let conn = self.pool.get()?;
 
@@ -120,11 +121,13 @@ impl Database {
     }
 
     /// Get a connection from the pool
+    #[allow(dead_code)]
     pub fn get_conn(&self) -> Result<r2d2::PooledConnection<SqliteConnectionManager>> {
         self.pool.get().context("Failed to get database connection")
     }
 
     /// Execute a raw SQL query (for CLI db commands)
+    #[allow(dead_code)]
     pub fn execute_query(&self, sql: &str) -> Result<Vec<Vec<String>>> {
         let conn = self.get_conn()?;
         let mut stmt = conn.prepare(sql)?;
